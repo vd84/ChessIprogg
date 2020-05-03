@@ -1,34 +1,47 @@
 package com.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.client.ChessGame;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChessServer implements Runnable {
 
     private static final int PORT = 2000;
     private static final Object lock = new Object();
-    private final Socket clientSocket1;
-    private final Socket clientSocket2;
+    private LinkedBlockingQueue<String> commands = new LinkedBlockingQueue<>();
+    private final Socket clientSocket;
 
 
-    public ChessServer(ArrayList<Socket> clientSockets) {
-        this.clientSocket1 = clientSockets.get(0);
-        this.clientSocket2 = clientSockets.get(1);
 
+    public ChessServer(Socket clientSocket) {
+
+
+        this.clientSocket = clientSocket;
     }
 
     @Override
     public void run() {
-
+        SocketAddress remoteSocketAddress = clientSocket.getRemoteSocketAddress();
+        SocketAddress localSocketAddress = clientSocket.getLocalSocketAddress();
+        PrintWriter socketWriter = null;
+        BufferedReader socketReader = null;
         boolean isGameRunning = true;
         AtomicBoolean isPlayer1sTurn = new AtomicBoolean(true);
+
+        try {
+            socketWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        PrintWriter finalSocketWriter = socketWriter;
 
         Player player1 = new Player();
         Player player2 = new Player();
@@ -141,56 +154,26 @@ public class ChessServer implements Runnable {
 
         Game game = new Game(player1, player2);
 
-        //Listen to player 1
-        new Thread(() -> {
-            while (isGameRunning) {
-                if (isPlayer1sTurn.get()) {
-                    try {
-                        BufferedReader player1Command = new BufferedReader(new InputStreamReader(this.clientSocket1.getInputStream()));
-                        String commandString = player1Command.readLine();
-                        String[] commandsSplit = commandString.split(",");
-                        int xCommand = Integer.parseInt(commandsSplit[0]);
-                        int yCommand = Integer.parseInt(commandsSplit[1]);
-                        int pieceId = Integer.parseInt(commandsSplit[2]);
-                        BoardPosition moveToPosition = new BoardPosition(xCommand, yCommand, true);
-                        if (player1.move(boardPositionWhitePiecesHashMap.get(pieceId), moveToPosition)) {
-
-                            isPlayer1sTurn.set(false);
-                        } else {
-
-                        }
-
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+        try {
+            socketReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            while (true) {
+                String inputLine = socketReader.readLine();
+                System.out.println(inputLine);
             }
-        }).start();
 
-        new Thread(() -> {
-            while (isGameRunning) {
-                if (!isPlayer1sTurn.get()) {
-                    try {
-                        BufferedReader player1Command = new BufferedReader(new InputStreamReader(this.clientSocket2.getInputStream()));
-                        String commandString = player1Command.readLine();
-                        String[] commandsSplit = commandString.split(",");
-                        int xCommand = Integer.parseInt(commandsSplit[0]);
-                        int yCommand = Integer.parseInt(commandsSplit[1]);
-                        int pieceId = Integer.parseInt(commandsSplit[2]);
-                        BoardPosition moveToPosition = new BoardPosition(xCommand, yCommand, true);
-                        if (player1.move(boardPositionWhitePiecesHashMap.get(pieceId), moveToPosition)) {
-
-                            isPlayer1sTurn.set(false);
-                        }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
+
+
+
+
 
 
     }
@@ -200,26 +183,26 @@ public class ChessServer implements Runnable {
         System.out.println("Server started.");
         ServerSocket serverSocket = null;
 
+
+
         try {
             int port = 2000;
-
             serverSocket = new ServerSocket(port);
             SocketAddress socketAddress = serverSocket.getLocalSocketAddress();
             System.out.println("Listening (" + socketAddress + ").");
+            Socket clientSocket;
+
 
             while (true) {
-                ArrayList<Socket> sockets = new ArrayList<>();
-                while (sockets.size() < 2) {
-                    sockets.add(serverSocket.accept());
-                    System.out.println("Waiting for both to connect");
-                }
-                System.out.println("Both connected");
-                ChessServer server = new ChessServer(sockets);
+                clientSocket = serverSocket.accept();
+                ChessServer server = new ChessServer(clientSocket);
                 Thread thread = new Thread(server);
                 thread.start();
                 System.out.println();
+
             }
         } catch (Exception e) {
+            System.out.println("null");
             System.out.println(e);
         } finally {
             try {
@@ -227,6 +210,8 @@ public class ChessServer implements Runnable {
                     serverSocket.close();
                 }
             } catch (Exception e) {
+                System.out.println("null");
+
                 System.out.println(e);
             }
 
@@ -234,6 +219,9 @@ public class ChessServer implements Runnable {
 
     }
 
+    public LinkedBlockingQueue<String> getCommands() {
+        return commands;
+    }
 }
 
 
