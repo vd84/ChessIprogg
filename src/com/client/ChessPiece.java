@@ -38,4 +38,6 @@ public class ChessPiece {
     public void setId(int id) {
         this.id = id;
     }
+
+
 }

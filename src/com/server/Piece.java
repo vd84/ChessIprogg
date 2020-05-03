@@ -16,15 +16,22 @@ public class Piece {
     }
 
     public boolean move(BoardPosition moveToPosition) {
+        if (canMoveToPosition(moveToPosition)) {
+            if (this instanceof Pawn) {
+                ((Pawn) this).setHasMoved(true);
+            }
 
-        return false;
+            this.boardPosition = moveToPosition;
+            return true;
+
+        } else {
+            return false;
+        }
+
     }
 
-    private boolean canMoveToPosition(BoardPosition currentPosition, BoardPosition movePosition) {
-
-
+    public boolean canMoveToPosition(BoardPosition movePosition) {
         return false;
-
     }
 
 
@@ -58,5 +65,18 @@ public class Piece {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public boolean capture(Piece capturedPiece, BoardPosition desiredPosition) {
+
+        return captureMove(capturedPiece, desiredPosition);
+
+
+
+
+    }
+
+    public boolean captureMove(Piece capturedPiece, BoardPosition desiredPosition){
+        return false;
     }
 }

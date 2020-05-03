@@ -1,23 +1,19 @@
 package com.server;
 
-import com.client.ChessGame;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChessServer implements Runnable {
-
-    private static final int PORT = 2000;
-    private static final Object lock = new Object();
     private LinkedBlockingQueue<String> commands = new LinkedBlockingQueue<>();
+    private static LinkedBlockingQueue<String> moves = new LinkedBlockingQueue<>();
     private final Socket clientSocket;
-
+    HashMap<Integer, Piece> boardPositionWhitePiecesHashMap = new HashMap<>();
+    HashMap<Integer, Piece> boardPositionBlackPiecesHashMap = new HashMap<>();
 
 
     public ChessServer(Socket clientSocket) {
@@ -31,7 +27,9 @@ public class ChessServer implements Runnable {
         SocketAddress remoteSocketAddress = clientSocket.getRemoteSocketAddress();
         SocketAddress localSocketAddress = clientSocket.getLocalSocketAddress();
         PrintWriter socketWriter = null;
+
         BufferedReader socketReader = null;
+
         boolean isGameRunning = true;
         AtomicBoolean isPlayer1sTurn = new AtomicBoolean(true);
 
@@ -41,139 +39,174 @@ public class ChessServer implements Runnable {
             e.printStackTrace();
         }
 
-        PrintWriter finalSocketWriter = socketWriter;
 
         Player player1 = new Player();
         Player player2 = new Player();
 
 
-        HashMap<Integer, Piece> boardPositionWhitePiecesHashMap = new HashMap<>();
-        HashMap<Integer, Piece> boardPositionBlackPiecesHashMap = new HashMap<>();
-
-
         // White Pieces
         // PAWNS
-        BoardPosition boardPosition = new BoardPosition(0, 0, true);
+        BoardPosition boardPosition = new BoardPosition(0, 6, true);
         boardPositionWhitePiecesHashMap.put(1, new Pawn(true, boardPosition, 1));
 
-        BoardPosition boardPosition2 = new BoardPosition(1, 0, true);
+        BoardPosition boardPosition2 = new BoardPosition(1, 6, true);
         boardPositionWhitePiecesHashMap.put(2, new Pawn(true, boardPosition2, 2));
 
-        BoardPosition boardPosition3 = new BoardPosition(2, 0, true);
+        BoardPosition boardPosition3 = new BoardPosition(2, 6, true);
         boardPositionWhitePiecesHashMap.put(3, new Pawn(true, boardPosition3, 3));
 
-        BoardPosition boardPosition4 = new BoardPosition(3, 0, true);
+        BoardPosition boardPosition4 = new BoardPosition(3, 6, true);
         boardPositionWhitePiecesHashMap.put(4, new Pawn(true, boardPosition4, 4));
 
-        BoardPosition boardPosition5 = new BoardPosition(4, 0, true);
+        BoardPosition boardPosition5 = new BoardPosition(4, 6, true);
         boardPositionWhitePiecesHashMap.put(5, new Pawn(true, boardPosition5, 5));
 
-        BoardPosition boardPosition6 = new BoardPosition(5, 0, true);
+        BoardPosition boardPosition6 = new BoardPosition(5, 6, true);
         boardPositionWhitePiecesHashMap.put(6, new Pawn(true, boardPosition6, 6));
 
-        BoardPosition boardPosition7 = new BoardPosition(6, 0, true);
+        BoardPosition boardPosition7 = new BoardPosition(6, 6, true);
         boardPositionWhitePiecesHashMap.put(7, new Pawn(true, boardPosition7, 7));
 
-        BoardPosition boardPosition8 = new BoardPosition(7, 0, true);
+        BoardPosition boardPosition8 = new BoardPosition(7, 6, true);
         boardPositionWhitePiecesHashMap.put(8, new Pawn(true, boardPosition8, 8));
 
-        BoardPosition boardPosition9 = new BoardPosition(0, 0, true);
-        boardPositionWhitePiecesHashMap.put(9, new Pawn(true, boardPosition9, 9));
+        BoardPosition boardPosition9 = new BoardPosition(0, 7, true);
+        boardPositionWhitePiecesHashMap.put(9, new Rook(true, boardPosition9, 9));
 
-        BoardPosition boardPosition10 = new BoardPosition(1, 1, true);
-        boardPositionWhitePiecesHashMap.put(10, new Pawn(true, boardPosition10, 10));
+        BoardPosition boardPosition10 = new BoardPosition(1, 7, true);
+        boardPositionWhitePiecesHashMap.put(10, new Knight(true, boardPosition10, 10));
 
-        BoardPosition boardPosition11 = new BoardPosition(2, 1, true);
-        boardPositionWhitePiecesHashMap.put(11, new Pawn(true, boardPosition11, 11));
+        BoardPosition boardPosition11 = new BoardPosition(2, 7, true);
+        boardPositionWhitePiecesHashMap.put(11, new Bishop(true, boardPosition11, 11));
 
-        BoardPosition boardPosition12 = new BoardPosition(3, 1, true);
-        boardPositionWhitePiecesHashMap.put(12, new Pawn(true, boardPosition12, 12));
+        BoardPosition boardPosition12 = new BoardPosition(3, 7, true);
+        boardPositionWhitePiecesHashMap.put(12, new Queen(true, boardPosition12, 12));
 
-        BoardPosition boardPosition13 = new BoardPosition(4, 1, true);
-        boardPositionWhitePiecesHashMap.put(13, new Pawn(true, boardPosition13, 13));
+        BoardPosition boardPosition13 = new BoardPosition(4, 7, true);
+        boardPositionWhitePiecesHashMap.put(13, new King(true, boardPosition13, 13));
 
-        BoardPosition boardPosition14 = new BoardPosition(5, 1, true);
-        boardPositionWhitePiecesHashMap.put(14, new Pawn(true, boardPosition14, 14));
+        BoardPosition boardPosition14 = new BoardPosition(5, 7, true);
+        boardPositionWhitePiecesHashMap.put(14, new Bishop(true, boardPosition14, 14));
 
-        BoardPosition boardPosition15 = new BoardPosition(6, 1, true);
-        boardPositionWhitePiecesHashMap.put(15, new Pawn(true, boardPosition15, 15));
+        BoardPosition boardPosition15 = new BoardPosition(6, 7, true);
+        boardPositionWhitePiecesHashMap.put(15, new Knight(true, boardPosition15, 15));
 
-        BoardPosition boardPosition16 = new BoardPosition(7, 1, true);
-        boardPositionWhitePiecesHashMap.put(16, new Pawn(true, boardPosition16, 16));
+        BoardPosition boardPosition16 = new BoardPosition(7, 7, true);
+        boardPositionWhitePiecesHashMap.put(16, new Rook(true, boardPosition16, 16));
 
 
         //Black Pieces
-        BoardPosition boardPosition17 = new BoardPosition(0, 0, true);
+        BoardPosition boardPosition17 = new BoardPosition(0, 1, true);
         boardPositionBlackPiecesHashMap.put(1, new Pawn(false, boardPosition17, 1));
 
-        BoardPosition boardPosition18 = new BoardPosition(1, 0, true);
+        BoardPosition boardPosition18 = new BoardPosition(1, 1, true);
         boardPositionBlackPiecesHashMap.put(2, new Pawn(false, boardPosition18, 2));
 
-        BoardPosition boardPosition19 = new BoardPosition(2, 0, true);
+        BoardPosition boardPosition19 = new BoardPosition(2, 1, true);
         boardPositionBlackPiecesHashMap.put(3, new Pawn(false, boardPosition19, 3));
 
-        BoardPosition boardPosition20 = new BoardPosition(3, 0, true);
+        BoardPosition boardPosition20 = new BoardPosition(3, 1, true);
         boardPositionBlackPiecesHashMap.put(4, new Pawn(false, boardPosition20, 4));
 
-        BoardPosition boardPosition21 = new BoardPosition(4, 0, true);
+        BoardPosition boardPosition21 = new BoardPosition(4, 1, true);
         boardPositionBlackPiecesHashMap.put(5, new Pawn(false, boardPosition21, 5));
 
-        BoardPosition boardPosition22 = new BoardPosition(5, 0, true);
+        BoardPosition boardPosition22 = new BoardPosition(5, 1, true);
         boardPositionBlackPiecesHashMap.put(6, new Pawn(false, boardPosition22, 6));
 
-        BoardPosition boardPosition23 = new BoardPosition(6, 0, true);
+        BoardPosition boardPosition23 = new BoardPosition(6, 1, true);
         boardPositionBlackPiecesHashMap.put(7, new Pawn(false, boardPosition23, 7));
 
-        BoardPosition boardPosition24 = new BoardPosition(7, 0, true);
+        BoardPosition boardPosition24 = new BoardPosition(7, 1, true);
         boardPositionBlackPiecesHashMap.put(8, new Pawn(false, boardPosition24, 8));
 
         BoardPosition boardPosition25 = new BoardPosition(0, 0, true);
-        boardPositionBlackPiecesHashMap.put(9, new Pawn(false, boardPosition25, 9));
+        boardPositionBlackPiecesHashMap.put(9, new Rook(false, boardPosition25, 9));
 
         BoardPosition boardPosition26 = new BoardPosition(1, 1, true);
-        boardPositionBlackPiecesHashMap.put(10, new Pawn(false, boardPosition26, 10));
+        boardPositionBlackPiecesHashMap.put(10, new Knight(false, boardPosition26, 10));
 
         BoardPosition boardPosition27 = new BoardPosition(2, 1, true);
-        boardPositionBlackPiecesHashMap.put(11, new Pawn(false, boardPosition27, 11));
+        boardPositionBlackPiecesHashMap.put(11, new Bishop(false, boardPosition27, 11));
 
         BoardPosition boardPosition28 = new BoardPosition(3, 1, true);
-        boardPositionBlackPiecesHashMap.put(12, new Pawn(false, boardPosition28, 12));
+        boardPositionBlackPiecesHashMap.put(12, new Queen(false, boardPosition28, 12));
 
         BoardPosition boardPosition29 = new BoardPosition(4, 1, true);
-        boardPositionBlackPiecesHashMap.put(13, new Pawn(false, boardPosition29, 13));
+        boardPositionBlackPiecesHashMap.put(13, new King(false, boardPosition29, 13));
 
         BoardPosition boardPosition30 = new BoardPosition(5, 1, true);
-        boardPositionBlackPiecesHashMap.put(14, new Pawn(false, boardPosition30, 14));
+        boardPositionBlackPiecesHashMap.put(14, new Bishop(false, boardPosition30, 14));
 
         BoardPosition boardPosition31 = new BoardPosition(6, 1, true);
-        boardPositionBlackPiecesHashMap.put(15, new Pawn(false, boardPosition31, 15));
+        boardPositionBlackPiecesHashMap.put(15, new Knight(false, boardPosition31, 15));
 
         BoardPosition boardPosition32 = new BoardPosition(7, 1, true);
-        boardPositionBlackPiecesHashMap.put(16, new Pawn(false, boardPosition32, 16));
+        boardPositionBlackPiecesHashMap.put(16, new Rook(false, boardPosition32, 16));
 
 
         Game game = new Game(player1, player2);
 
         try {
             socketReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+
+
         try {
             while (true) {
                 String inputLine = socketReader.readLine();
                 System.out.println(inputLine);
+                String[] splitString = inputLine.split(",");
+
+                boolean moveSuccessFul;
+                int pieceId = Integer.parseInt(splitString[0]);
+                int capturedPieceId = Integer.parseInt(splitString[1]);
+                int desiredXCoord = Integer.parseInt(splitString[4]);
+                int desiredYCoord = Integer.parseInt(splitString[5]);
+                System.out.println("testing y " + desiredYCoord);
+
+                BoardPosition desiredBoardPosition = new BoardPosition(desiredXCoord, desiredYCoord, false);
+                Piece piece = boardPositionWhitePiecesHashMap.get(pieceId);
+                Piece capturedPiece = boardPositionBlackPiecesHashMap.get(capturedPieceId);
+                System.out.println(piece.isWhite());
+                if (capturedPiece != null) {
+                    moveSuccessFul = piece.capture(capturedPiece, desiredBoardPosition);
+                    if (moveSuccessFul) {
+                        boardPositionBlackPiecesHashMap.remove(capturedPieceId);
+                    }
+
+
+                } else {
+                    moveSuccessFul = piece.move(desiredBoardPosition);
+
+                }
+                System.out.println("sending response");
+
+                if (moveSuccessFul) {
+                    piece.setBoardPosition(desiredBoardPosition);
+
+                    socketWriter.println("1");
+                    System.out.println("sucessfull");
+
+                } else {
+                    socketWriter.println(0);
+                    socketWriter.flush();
+
+                    System.out.println("failed move");
+
+                }
+
+
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-
-
-
-
 
 
     }
@@ -182,7 +215,6 @@ public class ChessServer implements Runnable {
 
         System.out.println("Server started.");
         ServerSocket serverSocket = null;
-
 
 
         try {
@@ -195,10 +227,10 @@ public class ChessServer implements Runnable {
 
             while (true) {
                 clientSocket = serverSocket.accept();
+                System.out.println("clientsockewte " + clientSocket);
                 ChessServer server = new ChessServer(clientSocket);
                 Thread thread = new Thread(server);
                 thread.start();
-                System.out.println();
 
             }
         } catch (Exception e) {
@@ -219,9 +251,7 @@ public class ChessServer implements Runnable {
 
     }
 
-    public LinkedBlockingQueue<String> getCommands() {
-        return commands;
-    }
+
 }
 
 
