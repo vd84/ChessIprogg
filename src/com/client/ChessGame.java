@@ -1,8 +1,14 @@
 package com.client;
+
+import com.server.Piece;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.*;
 
 public class ChessGame extends JFrame implements MouseListener, MouseMotionListener {
@@ -16,10 +22,14 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
     private HashMap<JPanel, ChessTile> chessTiles = new HashMap<>();
     private int prevX;
     private int prevY;
+    private int playerId = new Random().nextInt(5432254);
+    private boolean isWhite;
 
 
-    public ChessGame(ChessGameBackEnd chessGameBackEnd) throws IOException {
+    public ChessGame(ChessGameBackEnd chessGameBackEnd, boolean isWhite) throws IOException {
+        this.isWhite = isWhite;
         this.chessGameBackEnd = chessGameBackEnd;
+        this.chessGameBackEnd.setChessGame(this);
         Dimension boardSize = new Dimension(600, 600);
 
         //  Use a Layered Pane for this this application
@@ -38,155 +48,305 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
         chessBoard.setBounds(0, 0, boardSize.width, boardSize.height);
 
 
-        for (int i = 0; i < 64; i++) {
-            JPanel square = new JPanel(new BorderLayout());
-            chessBoard.add(square);
+        if (isWhite) {
+            for (int i = 0; i < 64; i++) {
+                JPanel square = new JPanel(new BorderLayout());
+                chessBoard.add(square);
 
-            int row = (i / 8) % 2;
+                int row = (i / 8) % 2;
 
-            JLabel piece;
-            JPanel panel;
-            ChessTile chessTile = new ChessTile(square, i % 8, (int) Math.floor(i / 8));
-            System.out.println((int) Math.floor(i / 8));
-            chessTiles.put(square, chessTile);
-
-
-            if (i >= 8 && i <= 15) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_pdt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, i % 8 + 1));
-
-            }
-
-            if (i >= 48 && i <= 55) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_plt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, i % 8 + 1));
-
-            }
+                JLabel piece;
+                JPanel panel;
+                ChessTile chessTile = new ChessTile(square, i % 8, (int) Math.floor(i / 8));
+                System.out.println((int) Math.floor(i / 8));
+                chessTiles.put(square, chessTile);
 
 
-            if (i == 2 || i == 5) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_bdt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                if (i == 2)
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 11));
+                if (i >= 8 && i <= 15) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_pdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, i % 8 + 1));
+
+                }
+
+                if (i >= 48 && i <= 55) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_plt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, i % 8 + 1));
+
+                }
+
+
+                if (i == 2 || i == 5) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_bdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 2)
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 11));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 14));
+
+
+                }
+                if (i == 0 || i == 7) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_rdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 0)
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 9));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 16));
+                }
+
+                if (i == 1 || i == 6) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_ndt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 1)
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 10));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 15));
+                }
+                if (i == 3) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_qdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 12));
+
+                }
+                if (i == 4) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_kdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 13));
+
+                }
+                if (i == 58 || i == 61) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_blt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 58)
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 11));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 14));
+                }
+                if (i == 63 || i == 56) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_rlt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 63)
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 9));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 16));
+                }
+
+                if (i == 57 || i == 62) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_nlt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 57)
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 10));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 15));
+                }
+                if (i == 59) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_qlt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 13));
+
+                }
+                if (i == 60) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_klt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 12));
+
+                }
+
+                if (row == 0)
+                    square.setBackground(i % 2 == 0 ? Color.BLUE : Color.white);
                 else
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 14));
-
-
+                    square.setBackground(i % 2 == 0 ? Color.white : Color.BLUE);
             }
-            if (i == 0 || i == 7) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_rdt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                if (i == 0)
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 9));
+
+
+        } else {
+            for (int i = 0; i < 64; i++) {
+                JPanel square = new JPanel(new BorderLayout());
+                chessBoard.add(square);
+
+                int row = (i / 8) % 2;
+
+                JLabel piece;
+                JPanel panel;
+                ChessTile chessTile = new ChessTile(square, i % 8, (int) Math.floor(i / 8));
+                System.out.println((int) Math.floor(i / 8));
+                chessTiles.put(square, chessTile);
+
+
+                if (i >= 8 && i <= 15) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_plt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, i % 8 + 1));
+
+                }
+
+                if (i >= 48 && i <= 55) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_pdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, i % 8 + 1));
+
+                }
+
+
+                if (i == 2 || i == 5) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_blt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 2)
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 11));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 14));
+
+
+                }
+                if (i == 0 || i == 7) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_rlt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 0)
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 9));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 16));
+                }
+
+                if (i == 1 || i == 6) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_nlt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 1)
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 10));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 15));
+                }
+                if (i == 3 +1) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_qlt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 12));
+
+                }
+                if (i == 4-1) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_klt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 13));
+
+                }
+                if (i == 58 || i == 61) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_bdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 58)
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 11));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 14));
+                }
+                if (i == 63 || i == 56) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_rdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 63)
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 9));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 16));
+                }
+
+                if (i == 57 || i == 62) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_ndt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    if (i == 57)
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 10));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 15));
+                }
+                if (i == 59) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_qdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 13));
+
+                }
+                if (i == 60) {
+                    ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_kdt60.png");
+                    Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
+                    piece = new JLabel(new ImageIcon(scaleImage));
+                    panel = (JPanel) chessBoard.getComponent(i);
+                    panel.add(piece);
+                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 12));
+
+                }
+
+                if (row == 0)
+                    square.setBackground(i % 2 == 0 ? Color.BLUE : Color.white);
                 else
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 16));
+                    square.setBackground(i % 2 == 0 ? Color.white : Color.BLUE);
             }
 
-            if (i == 1 || i == 6) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_ndt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                if (i == 1)
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 10));
-                else
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 15));
-            }
-            if (i == 3) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_qdt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 12));
 
-            }
-            if (i == 4) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_kdt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 13));
-
-            }
-            if (i == 58 || i == 61) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_blt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                if (i == 58)
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 11));
-                else
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 14));
-            }
-            if (i == 63 || i == 56) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_rlt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                if (i == 63)
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 9));
-                else
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 16));
-            }
-
-            if (i == 57 || i == 62) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_nlt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                if (i == 57)
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 10));
-                else
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 15));
-            }
-            if (i == 59) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_qlt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 13));
-
-            }
-            if (i == 60) {
-                ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_klt60.png");
-                Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
-                piece = new JLabel(new ImageIcon(scaleImage));
-                panel = (JPanel) chessBoard.getComponent(i);
-                panel.add(piece);
-                chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 12));
-
-            }
-
-            if (row == 0)
-                square.setBackground(i % 2 == 0 ? Color.BLUE : Color.white);
-            else
-                square.setBackground(i % 2 == 0 ? Color.white : Color.BLUE);
         }
-
-
-
     }
 
     public void mousePressed(MouseEvent e) {
@@ -197,8 +357,12 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
         prevX = e.getX();
         prevY = e.getY();
 
-        if (currentC instanceof JPanel)
+        if (chessPieceHashMap.get((JLabel) currentC).isWhite() != this.isWhite){
             return;
+        }
+
+            if (currentC instanceof JPanel)
+                return;
 
         Point parentLocation = currentC.getParent().getLocation();
         xAdjustment = parentLocation.x - e.getX();
@@ -241,17 +405,13 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
             int capturedChessPieceId = -1;
 
 
-
-
-            if (desiredC instanceof JLabel){
+            if (desiredC instanceof JLabel) {
                 capturedChessJLabel = (JLabel) desiredC;
                 capturedPiece = chessPieceHashMap.get(desiredC);
                 capturedChessPieceId = capturedPiece.getId();
 
                 desiredC = desiredC.getParent();
             }
-            ChessTile desiredChessTile = chessTiles.get(desiredC);
-            JPanel desiredPanel = desiredChessTile.getPanel();
 
             int desiredXCoord = chessTiles.get(desiredC).getxCoord();
             int desiredYCoord = chessTiles.get(desiredC).getyCoord();
@@ -260,12 +420,10 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
             //Check if piece is captured, and what piece in that case
 
 
-
-            moveSuccessful = this.chessGameBackEnd.clickHandler(movedPieceId + "," +
+            moveSuccessful = this.chessGameBackEnd.clickHandler(playerId + "," + movedPieceId + "," +
                     +capturedChessPieceId + "," + movedPieceXCoord + "," + movedPieceYCoord
                     + "," + desiredXCoord + "," + desiredYCoord);
 
-            System.out.println("TEST!!!!!!!!!!!");
 
             if (capturedChessJLabel != null && moveSuccessful) {
                 chessBoard.remove(capturedChessJLabel);
@@ -283,7 +441,6 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
             System.out.println("ufdsauida");
             System.out.println("XTEST: " + chessPieceHashMap.get(chessPiece).getChessTile().getxCoord());
             System.out.println("YTEST: " + chessPieceHashMap.get(chessPiece).getChessTile().getyCoord());
-
             desiredC = chessBoard.findComponentAt(prevX, prevY);
         } else {
             System.out.println("move sucess");
@@ -322,6 +479,50 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
     }
 
     public void mouseExited(MouseEvent e) {
+
+    }
+
+    public synchronized void adjustChessBoard(int playerId, int capturedId, int pieceId, boolean isWhite, int xCoord, int yCoord) {
+        if (this.playerId == playerId) {
+            return;
+        }
+        System.out.println("adjusting pieces");
+
+        ChessPiece capturedPiece = null;
+        JLabel capturedChessJLabel = null;
+        ChessPiece chessPiece = null;
+        JLabel chessPieceLabel = null;
+        JPanel desiredChessTileJPanel = null;
+        ChessTile desiredChessTile;
+        for (Map.Entry<JLabel, ChessPiece> entry : chessPieceHashMap.entrySet()) {
+            if (entry.getValue().getId() == pieceId && entry.getValue().isWhite() == !this.isWhite) {
+                chessPiece = chessPieceHashMap.get(entry.getKey());
+                chessPieceLabel = entry.getKey();
+            }
+
+            if (entry.getValue().getId() == capturedId && entry.getValue().isWhite() == this.isWhite) {
+
+
+                capturedChessJLabel = entry.getKey();
+                JPanel jPanel = (JPanel) capturedChessJLabel.getParent();
+                jPanel.remove(capturedChessJLabel);
+                System.out.println("removing: " + capturedChessJLabel);
+            }
+
+        }
+        for (Map.Entry<JPanel, ChessTile> entry : chessTiles.entrySet()) {
+            if (entry.getValue().getxCoord() == xCoord && entry.getValue().getyCoord() == (yCoord - 7) * -1) {
+                desiredChessTileJPanel = entry.getKey();
+                desiredChessTile = entry.getValue();
+
+            }
+        }
+
+
+        desiredChessTileJPanel.add(chessPieceLabel);
+
+        repaint();
+
 
     }
 

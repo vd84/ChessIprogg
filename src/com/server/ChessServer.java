@@ -1,23 +1,30 @@
 package com.server;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ChessServer implements Runnable {
     private LinkedBlockingQueue<String> commands = new LinkedBlockingQueue<>();
-    private static LinkedBlockingQueue<String> moves = new LinkedBlockingQueue<>();
+    private ArrayList<LinkedBlockingQueue<String>> blockingQueues;
+    private LinkedBlockingQueue<String> moves;
     private final Socket clientSocket;
     HashMap<Integer, Piece> boardPositionWhitePiecesHashMap = new HashMap<>();
     HashMap<Integer, Piece> boardPositionBlackPiecesHashMap = new HashMap<>();
 
 
-    public ChessServer(Socket clientSocket) {
 
+    public ChessServer(Socket clientSocket, ArrayList<LinkedBlockingQueue<String>> blockingQueues, LinkedBlockingQueue<String> myMoves) {
+        this.blockingQueues = blockingQueues;
+        this.moves = myMoves;
 
         this.clientSocket = clientSocket;
     }
@@ -155,6 +162,25 @@ public class ChessServer implements Runnable {
         }
 
 
+        if (blockingQueues.size() < 2) {
+            socketWriter.println("white");
+        } else {
+            socketWriter.println("black");
+        }
+        PrintWriter finalSocketWriter = socketWriter;
+        new Thread(() -> {
+
+            while (true) {
+                try {
+                    System.out.println(this);
+                    System.out.println("sending moves");
+                    String move = moves.take();
+                    finalSocketWriter.println(move);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
 
 
         try {
@@ -164,10 +190,12 @@ public class ChessServer implements Runnable {
                 String[] splitString = inputLine.split(",");
 
                 boolean moveSuccessFul;
-                int pieceId = Integer.parseInt(splitString[0]);
-                int capturedPieceId = Integer.parseInt(splitString[1]);
-                int desiredXCoord = Integer.parseInt(splitString[4]);
-                int desiredYCoord = Integer.parseInt(splitString[5]);
+                int senderId = Integer.parseInt(splitString[0]);
+                System.out.println("senderId" + senderId);
+                int pieceId = Integer.parseInt(splitString[1]);
+                int capturedPieceId = Integer.parseInt(splitString[2]);
+                int desiredXCoord = Integer.parseInt(splitString[5]);
+                int desiredYCoord = Integer.parseInt(splitString[6]);
                 System.out.println("testing y " + desiredYCoord);
 
                 BoardPosition desiredBoardPosition = new BoardPosition(desiredXCoord, desiredYCoord, false);
@@ -188,17 +216,17 @@ public class ChessServer implements Runnable {
                 System.out.println("sending response");
 
                 if (moveSuccessFul) {
+                    for (LinkedBlockingQueue<String> queue : blockingQueues){
+                        queue.add("move," + senderId + "," + piece.isWhite() + "," + piece.getId() + "," + desiredXCoord + "," + desiredYCoord + "," + capturedPieceId);
+                    }
                     piece.setBoardPosition(desiredBoardPosition);
-
-                    socketWriter.println("1");
                     System.out.println("sucessfull");
 
                 } else {
-                    socketWriter.println(0);
-                    socketWriter.flush();
-
+                    for (LinkedBlockingQueue<String> queue : blockingQueues){
+                        queue.add("failed," + senderId + "," + piece.isWhite() + "," + piece.getId() + "," + desiredXCoord + "," + desiredYCoord + "," + capturedPieceId);
+                    }
                     System.out.println("failed move");
-
                 }
 
 
@@ -225,12 +253,22 @@ public class ChessServer implements Runnable {
             Socket clientSocket;
 
 
+            ArrayList<LinkedBlockingQueue<String>> moveQueues = new ArrayList<>();
+
             while (true) {
-                clientSocket = serverSocket.accept();
-                System.out.println("clientsockewte " + clientSocket);
-                ChessServer server = new ChessServer(clientSocket);
-                Thread thread = new Thread(server);
-                thread.start();
+                if(moveQueues.size() >=2) {
+                    moveQueues = new ArrayList<LinkedBlockingQueue<String>>();
+                }
+                    clientSocket = serverSocket.accept();
+                    LinkedBlockingQueue<String> moves = new LinkedBlockingQueue<>();
+                    moveQueues.add(moves);
+
+                    System.out.println("clientsockewte " + clientSocket);
+                    ChessServer server = new ChessServer(clientSocket, moveQueues, moves);
+                    Thread thread = new Thread(server);
+                    thread.start();
+
+
 
             }
         } catch (Exception e) {

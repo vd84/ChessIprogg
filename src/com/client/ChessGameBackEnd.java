@@ -5,7 +5,6 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
@@ -16,8 +15,11 @@ public class ChessGameBackEnd extends Thread {
     private final BufferedReader socketReader;
     private final PrintWriter socketWriter;
     private LinkedBlockingQueue<String> commands = new LinkedBlockingQueue<>();
-    private LinkedBlockingQueue<Integer> responseFromServer = new LinkedBlockingQueue<>();
-
+    public LinkedBlockingQueue<Integer> responseFromServer = new LinkedBlockingQueue<>();
+    public LinkedBlockingQueue<String> moves = new LinkedBlockingQueue<>();
+    private ChessGame chessGame;
+    private static final Object lock = new Object();
+    private boolean isWhite;
 
     public ChessGameBackEnd(BufferedReader bufferedReader, PrintWriter printWriter) {
         this.socketReader = bufferedReader;
@@ -27,19 +29,62 @@ public class ChessGameBackEnd extends Thread {
 
     @Override
     public void run() {
+        new Thread(() -> {
 
-        ChessGame chessGame = null;
-        try {
-            System.out.println("creating game");
-            chessGame = new ChessGame(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        chessGame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        chessGame.pack();
-        chessGame.setResizable(true);
-        chessGame.setLocationRelativeTo(null);
-        chessGame.setVisible(true);
+            while (true) {
+                try {
+
+                    String response = socketReader.readLine();
+                    String[] responseFromServerSplit = response.split(",");
+
+                    if (response.equals("white")){
+                        this.isWhite = true;
+                    }
+                    if (response.equals("black")){
+                        this.isWhite = false;
+                    }
+
+                    if (chessGame == null){
+                        try {
+                            System.out.println("creating game");
+                            chessGame = new ChessGame(this, isWhite);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        chessGame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+                        chessGame.pack();
+                        chessGame.setResizable(true);
+                        chessGame.setLocationRelativeTo(null);
+                        chessGame.setVisible(true);
+
+                    }
+
+
+                    if (responseFromServerSplit[0].equals("response")){
+                        responseFromServer.add(Integer.parseInt(responseFromServerSplit[1]));
+
+                    }
+                    else if(responseFromServerSplit[0].equals("move")){
+                        responseFromServer.add(1);
+                        moves.add(responseFromServerSplit[1]);
+                        System.out.println("Player moved: " + response);
+
+                        chessGame.adjustChessBoard(Integer.parseInt(responseFromServerSplit[1]), Integer.parseInt(responseFromServerSplit[6]),Integer.parseInt(responseFromServerSplit[3]), Boolean.parseBoolean(responseFromServerSplit[2]), Integer.parseInt(responseFromServerSplit[4]), Integer.parseInt(responseFromServerSplit[5]));
+
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+
+
+
+
+
+
 
 
         while (true) {
@@ -50,18 +95,16 @@ public class ChessGameBackEnd extends Thread {
                 socketWriter.println(command);
                 System.out.println(socketReader);
                 Thread.sleep(100);
-                int response = Integer.parseInt(socketReader.readLine());
-                System.out.println("RESPONSEdfsagdfasfdsafdsa");
-                responseFromServer.add(response);
-                Thread.sleep(100);
-                System.out.println(commands);
-            } catch (InterruptedException | IOException e) {
+
+
+
+
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
 
         }
-
 
 
     }
@@ -89,7 +132,6 @@ public class ChessGameBackEnd extends Thread {
             thread.start();
 
 
-
             System.out.println("Closing connection " + localSocketAddress + " (" + remoteSocketAddress + ").");
         } catch (ConnectException connectException) {
             System.out.println("No server available");
@@ -107,14 +149,22 @@ public class ChessGameBackEnd extends Thread {
         return getResponseForMove();
     }
 
-    public synchronized boolean getResponseForMove() throws InterruptedException {
+    public boolean getResponseForMove() throws InterruptedException {
         System.out.println("getting response");
 
         System.out.println(responseFromServer);
+
         return responseFromServer.take() == 1;
 
 
     }
 
 
+    public ChessGame getChessGame() {
+        return chessGame;
+    }
+
+    public void setChessGame(ChessGame chessGame) {
+        this.chessGame = chessGame;
+    }
 }
