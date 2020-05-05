@@ -73,6 +73,10 @@ public class ChessGameBackEnd extends Thread {
 
                     }
 
+                    if (responseFromServerSplit[0].equals("failed")){
+                        responseFromServer.add(0);
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -91,7 +95,7 @@ public class ChessGameBackEnd extends Thread {
 
             try {
                 String command = commands.take();
-                System.out.println(command);
+                System.out.println("command sent to server " + command);
                 socketWriter.println(command);
                 System.out.println(socketReader);
                 Thread.sleep(100);
@@ -153,6 +157,7 @@ public class ChessGameBackEnd extends Thread {
         System.out.println("getting response");
 
         System.out.println(responseFromServer);
+
 
         return responseFromServer.take() == 1;
 

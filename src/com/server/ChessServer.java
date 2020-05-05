@@ -21,7 +21,6 @@ public class ChessServer implements Runnable {
     HashMap<Integer, Piece> boardPositionBlackPiecesHashMap = new HashMap<>();
 
 
-
     public ChessServer(Socket clientSocket, ArrayList<LinkedBlockingQueue<String>> blockingQueues, LinkedBlockingQueue<String> myMoves) {
         this.blockingQueues = blockingQueues;
         this.moves = myMoves;
@@ -203,6 +202,7 @@ public class ChessServer implements Runnable {
                 Piece capturedPiece = boardPositionBlackPiecesHashMap.get(capturedPieceId);
                 System.out.println(piece.isWhite());
                 if (capturedPiece != null) {
+                    System.out.println("captured piece is not null");
                     moveSuccessFul = piece.capture(capturedPiece, desiredBoardPosition);
                     if (moveSuccessFul) {
                         boardPositionBlackPiecesHashMap.remove(capturedPieceId);
@@ -213,21 +213,42 @@ public class ChessServer implements Runnable {
                     moveSuccessFul = piece.move(desiredBoardPosition);
 
                 }
-                System.out.println("sending response");
 
-                if (moveSuccessFul) {
-                    for (LinkedBlockingQueue<String> queue : blockingQueues){
-                        queue.add("move," + senderId + "," + piece.isWhite() + "," + piece.getId() + "," + desiredXCoord + "," + desiredYCoord + "," + capturedPieceId);
-                    }
-                    piece.setBoardPosition(desiredBoardPosition);
-                    System.out.println("sucessfull");
-
-                } else {
-                    for (LinkedBlockingQueue<String> queue : blockingQueues){
-                        queue.add("failed," + senderId + "," + piece.isWhite() + "," + piece.getId() + "," + desiredXCoord + "," + desiredYCoord + "," + capturedPieceId);
-                    }
-                    System.out.println("failed move");
+                if (capturedPiece != null){
+                    System.out.println("is same color?");
+                    System.out.println(capturedPiece.isWhite());
+                    System.out.println(piece.isWhite());
+                    System.out.println(capturedPiece.isWhite() == piece.isWhite());
                 }
+
+                if (capturedPiece != null && capturedPiece.isWhite() == piece.isWhite()){
+                    System.out.println("cant capture your own piece");
+                    moveSuccessFul = false;
+                }
+
+                if (capturedPieceId == -99){
+                    System.out.println("cant capture own piece");
+                    moveSuccessFul = false;
+                }
+
+                System.out.println("captured piece id:" + capturedPieceId);
+
+
+                    if (moveSuccessFul) {
+                        for (LinkedBlockingQueue<String> queue : blockingQueues) {
+                            queue.add("move," + senderId + "," + piece.isWhite() + "," + piece.getId() + "," + desiredXCoord + "," + desiredYCoord + "," + capturedPieceId);
+                        }
+
+                        piece.setBoardPosition(desiredBoardPosition);
+
+                        System.out.println("sucessfull");
+
+                    } else {
+                        for (LinkedBlockingQueue<String> queue : blockingQueues) {
+                            queue.add("failed," + senderId + "," + piece.isWhite() + "," + piece.getId() + "," + desiredXCoord + "," + desiredYCoord + "," + capturedPieceId);
+                        }
+                        System.out.println("failed move");
+                    }
 
 
             }
@@ -256,18 +277,17 @@ public class ChessServer implements Runnable {
             ArrayList<LinkedBlockingQueue<String>> moveQueues = new ArrayList<>();
 
             while (true) {
-                if(moveQueues.size() >=2) {
+                if (moveQueues.size() >= 2) {
                     moveQueues = new ArrayList<LinkedBlockingQueue<String>>();
                 }
-                    clientSocket = serverSocket.accept();
-                    LinkedBlockingQueue<String> moves = new LinkedBlockingQueue<>();
-                    moveQueues.add(moves);
+                clientSocket = serverSocket.accept();
+                LinkedBlockingQueue<String> moves = new LinkedBlockingQueue<>();
+                moveQueues.add(moves);
 
-                    System.out.println("clientsockewte " + clientSocket);
-                    ChessServer server = new ChessServer(clientSocket, moveQueues, moves);
-                    Thread thread = new Thread(server);
-                    thread.start();
-
+                System.out.println("clientsockewte " + clientSocket);
+                ChessServer server = new ChessServer(clientSocket, moveQueues, moves);
+                Thread thread = new Thread(server);
+                thread.start();
 
 
             }
