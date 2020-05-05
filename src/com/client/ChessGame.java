@@ -48,6 +48,7 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
         chessBoard.setBounds(0, 0, boardSize.width, boardSize.height);
 
 
+        int incrementer = -2;
         if (isWhite) {
             for (int i = 0; i < 64; i++) {
                 JPanel square = new JPanel(new BorderLayout());
@@ -63,12 +64,13 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
 
 
                 if (i >= 8 && i <= 15) {
+                    incrementer = incrementer +2;
                     ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_pdt60.png");
                     Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
                     piece = new JLabel(new ImageIcon(scaleImage));
                     panel = (JPanel) chessBoard.getComponent(i);
                     panel.add(piece);
-                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, i % 8 + 1));
+                    chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, i - incrementer));
 
                 }
 
@@ -90,9 +92,9 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
                     panel = (JPanel) chessBoard.getComponent(i);
                     panel.add(piece);
                     if (i == 2)
-                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 11));
-                    else
                         chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 14));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(false, chessTile, 11));
 
 
                 }
@@ -155,9 +157,9 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
                     panel = (JPanel) chessBoard.getComponent(i);
                     panel.add(piece);
                     if (i == 63)
-                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 9));
-                    else
                         chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 16));
+                    else
+                        chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, 9));
                 }
 
                 if (i == 57 || i == 62) {
@@ -198,6 +200,9 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
 
 
         } else {
+            int blackPawnIncrementer = -2;
+            int whitePawnIncrementer = -2;
+
             for (int i = 0; i < 64; i++) {
                 JPanel square = new JPanel(new BorderLayout());
                 chessBoard.add(square);
@@ -212,16 +217,19 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
 
 
                 if (i >= 8 && i <= 15) {
+                    whitePawnIncrementer = whitePawnIncrementer  +2;
                     ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_plt60.png");
                     Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
                     piece = new JLabel(new ImageIcon(scaleImage));
                     panel = (JPanel) chessBoard.getComponent(i);
                     panel.add(piece);
-                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, i % 8 + 1));
+                    chessPieceHashMap.put(piece, new ChessPiece(true, chessTile, i-whitePawnIncrementer));
 
                 }
 
                 if (i >= 48 && i <= 55) {
+                    blackPawnIncrementer = blackPawnIncrementer + 2;
+
                     ImageIcon imageIcon = new ImageIcon("C:\\Users\\Douglas\\Dropbox\\ChessIprogg2\\src\\res\\pieces\\Chess_pdt60.png");
                     Image scaleImage = imageIcon.getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT);
                     piece = new JLabel(new ImageIcon(scaleImage));
@@ -412,16 +420,21 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
 
                 desiredC = desiredC.getParent();
             }
+            System.out.println("HÄR ÄR RUTANS X VÄRDE " + chessTiles.get(desiredC).getxCoord());
+            System.out.println("HÄR ÄR RUTANS Y VÄRDE " + chessTiles.get(desiredC).getyCoord());
 
             int desiredXCoord = chessTiles.get(desiredC).getxCoord();
             int desiredYCoord = chessTiles.get(desiredC).getyCoord();
-            String command = null;
 
             //Check if piece is captured, and what piece in that case
 
+            if(capturedPiece != null && capturedPiece.isWhite() == this.isWhite){
+                capturedChessPieceId = -99;
+
+            }
 
             moveSuccessful = this.chessGameBackEnd.clickHandler(playerId + "," + movedPieceId + "," +
-                    +capturedChessPieceId + "," + movedPieceXCoord + "," + movedPieceYCoord
+                    + capturedChessPieceId + "," + movedPieceXCoord + "," + movedPieceYCoord
                     + "," + desiredXCoord + "," + desiredYCoord);
 
 
@@ -436,6 +449,7 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
+        System.out.println("WAS MOVE SUCESSFUL?? " +moveSuccessful );
 
         if (!moveSuccessful) {
             System.out.println("ufdsauida");
@@ -444,10 +458,10 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
             desiredC = chessBoard.findComponentAt(prevX, prevY);
         } else {
             System.out.println("move sucess");
-            chessPieceHashMap.get(chessPiece).getChessTile().setxCoord(chessTiles.get(desiredC).getxCoord());
-            chessPieceHashMap.get(chessPiece).getChessTile().setyCoord(chessTiles.get(desiredC).getyCoord());
+
 
         }
+
 
 
         if (desiredC instanceof JLabel) {
@@ -500,6 +514,7 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
                 chessPieceLabel = entry.getKey();
             }
 
+
             if (entry.getValue().getId() == capturedId && entry.getValue().isWhite() == this.isWhite) {
 
 
@@ -511,7 +526,7 @@ public class ChessGame extends JFrame implements MouseListener, MouseMotionListe
 
         }
         for (Map.Entry<JPanel, ChessTile> entry : chessTiles.entrySet()) {
-            if (entry.getValue().getxCoord() == xCoord && entry.getValue().getyCoord() == (yCoord - 7) * -1) {
+            if (entry.getValue().getxCoord() == (xCoord - 7)*-1 && entry.getValue().getyCoord() == (yCoord - 7) * -1) {
                 desiredChessTileJPanel = entry.getKey();
                 desiredChessTile = entry.getValue();
 
