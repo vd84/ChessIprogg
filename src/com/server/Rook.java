@@ -1,26 +1,21 @@
 package com.server;
 
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class Rook extends Piece {
-    public Rook(boolean isWhite, BoardPosition boardPosition, int id) {
-        super(isWhite, boardPosition, id);
+    public Rook(boolean isWhite, BoardPosition boardPosition, int id, ChessServer chessServer) {
+        super(isWhite, boardPosition, id, chessServer);
     }
 
 
     @Override
     public boolean canMoveToPosition(BoardPosition movePosition) {
         BoardPosition currentPos = this.getBoardPosition();
-        int currentX = currentPos.getxPosition();
-        int currentY = currentPos.getyPoisition();
-        int desiredX = movePosition.getxPosition();
-        int desiredY = movePosition.getyPoisition();
-        System.out.println("in white");
+        int currentX = currentPos.getxPos();
+        int currentY = currentPos.getyPos();
+        int desiredX = movePosition.getxPos();
+        int desiredY = movePosition.getyPos();
 
-
-        System.out.println("moving rook");
-        System.out.println("currentx: " + currentX);
-        System.out.println("desiredx: " + desiredX);
-        System.out.println("currenty: " + currentY);
-        System.out.println("desiredY: " + desiredY);
         return (currentX == desiredX) || (currentY == desiredY);
 
 
@@ -29,7 +24,6 @@ public class Rook extends Piece {
 
     @Override
     public boolean captureMove(Piece capturedPiece, BoardPosition desiredPosition) {
-        System.out.println("PIECE TAKEN: " + capturedPiece);
 
         if (capturedPiece instanceof King){
             return false;
@@ -38,4 +32,73 @@ public class Rook extends Piece {
 
 
     }
+
+    @Override
+    public void calculatePossibleMoves() {
+        this.setPossibleMoves(new CopyOnWriteArrayList<>());
+        int currentX = this.getBoardPosition().getxPos();
+        int currentY = this.getBoardPosition().getyPos();
+
+        int moveX = currentX;
+        int moveY = currentY;
+        boolean[][] whiteOccupiedBoardPositions = this.getChessServer().getWhiteOccupiedBoardPositions();
+        boolean[][] blackOccupiedBoardPositions = this.getChessServer().getBlackOccupiedBoardPositions();
+
+
+        while(moveY <7 && moveX <7){
+
+            moveY = moveY + 1;
+            moveX = currentX;
+            this.getPossibleMoves().add(new BoardPosition(moveX , moveY, false));
+
+            if (whiteOccupiedBoardPositions[moveX][moveY] || blackOccupiedBoardPositions[moveX][moveY]){
+                break;
+            }
+        }
+
+        moveX = currentX;
+        moveY = currentY;
+        while(moveY >0 && moveX <7){
+
+            moveY = moveY -1;
+            moveX  = currentX;
+            this.getPossibleMoves().add(new BoardPosition(moveX , moveY, false));
+
+            if (whiteOccupiedBoardPositions[moveX][moveY] || blackOccupiedBoardPositions[moveX][moveY]){
+                break;
+            }
+        }
+
+        moveX = currentX;
+        moveY = currentY;
+        while(moveY <7 && moveX >0){
+
+            moveY = currentY;
+            moveX  = moveX -1;
+            this.getPossibleMoves().add(new BoardPosition(moveX , moveY, false));
+
+            if (whiteOccupiedBoardPositions[moveX][moveY] || blackOccupiedBoardPositions[moveX][moveY]){
+                break;
+            }
+        }
+
+        moveX = currentX;
+        moveY = currentY;
+        while(moveY <7 && moveX <7){
+
+            moveY = currentY;
+            moveX = moveX +1;
+            this.getPossibleMoves().add(new BoardPosition(moveX , moveY, false));
+
+            if (whiteOccupiedBoardPositions[moveX][moveY] || blackOccupiedBoardPositions[moveX][moveY]){
+                break;
+            }
+        }
+
+
+    }
+
+
+
+
 }

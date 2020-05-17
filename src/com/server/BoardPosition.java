@@ -3,32 +3,32 @@ package com.server;
 public class BoardPosition {
 
 
-    private int xPosition;
-    private int yPoisition;
+    private int xPos;
+    private int yPos;
     private boolean isOccupied;
 
 
-    public BoardPosition(int xPosition, int yPoisition, boolean isOccupied) {
-        this.xPosition = xPosition;
-        this.yPoisition = yPoisition;
+    public BoardPosition(int xPos, int yPos, boolean isOccupied) {
+        this.xPos = xPos;
+        this.yPos = yPos;
         this.isOccupied = isOccupied;
     }
 
 
-    public int getxPosition() {
-        return xPosition;
+    public int getxPos() {
+        return xPos;
     }
 
-    public void setxPosition(int xPosition) {
-        this.xPosition = xPosition;
+    public void setxPos(int xPos) {
+        this.xPos = xPos;
     }
 
-    public int getyPoisition() {
-        return yPoisition;
+    public int getyPos() {
+        return yPos;
     }
 
-    public void setyPoisition(int yPoisition) {
-        this.yPoisition = yPoisition;
+    public void setyPos(int yPos) {
+        this.yPos = yPos;
     }
 
     public boolean isOccupied() {
